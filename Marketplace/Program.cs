@@ -1,25 +1,35 @@
-var builder = WebApplication.CreateBuilder(args);
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using static System.Environment;
+using static System.Reflection.Assembly;
 
-// Add services to the container.
-builder.Services.AddRazorPages();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+namespace Marketplace
 {
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    public static class Program
+    {
+        static Program() => CurrentDirectory = Path.GetDirectoryName(GetEntryAssembly().Location);
+
+        public static void Main(string[] args)
+        {
+            var configuration = BuildConfiguration(args);
+
+            ConfigureWebHost(configuration).Build().Run();
+        }
+
+        private static IConfiguration BuildConfiguration(string[] args)
+            => new ConfigurationBuilder()
+                .SetBasePath(CurrentDirectory)
+                .Build();
+
+        private static IWebHostBuilder ConfigureWebHost(
+            IConfiguration configuration)
+            => new WebHostBuilder()
+                .UseStartup<Startup>()
+                .UseConfiguration(configuration)
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .UseContentRoot(CurrentDirectory)
+                .UseKestrel();
+    }
 }
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthorization();
-
-app.MapRazorPages();
-
-app.Run();

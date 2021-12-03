@@ -7,9 +7,9 @@ namespace Marketplace.Domain
     {
         private readonly string _value;
 
-        private ClassifiedAdTitle(string value)
+        public ClassifiedAdTitle(string value)
         {
-            if (value.Length > 100) throw new ArgumentOutOfRangeException(nameof(value), "Title should not be longer than 100 characters");
+            CheckValidity(value);
             _value = value;
         }
 
@@ -23,7 +23,18 @@ namespace Marketplace.Domain
                 .Replace("<b>", "**")
                 .Replace("</b>", "**");
 
-            return new ClassifiedAdTitle(Regex.Replace(supportedTagsReplaced, "<.*?>", string.Empty));  // Will replace anything between arrow brackets with empty strings:
+            var value = Regex.Replace(supportedTagsReplaced, "<.*?>", string.Empty);
+
+            CheckValidity(value);
+
+            return new ClassifiedAdTitle(value);  // Will replace anything between arrow brackets with empty strings
+        }
+
+        public static implicit operator string(ClassifiedAdTitle text) => text._value;
+
+        private static void CheckValidity(string value)
+        {
+            if (value.Length > 100) throw new ArgumentOutOfRangeException(nameof(value), "Title should not be longer than 100 characters");
         }
     }
 }
