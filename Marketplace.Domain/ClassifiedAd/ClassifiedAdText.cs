@@ -1,9 +1,20 @@
 ﻿using Marketplace.Framework;
 
-namespace Marketplace.Domain
+namespace Marketplace.Domain.ClassifiedAd
 {
     public class ClassifiedAdText : Value<ClassifiedAdText>
     {
+        //
+        // Properties to handle the persistence
+        //
+
+        // Satisfy the serialization requirements 
+        protected ClassifiedAdText() { }
+
+        //
+        // Domain state properties
+        //
+
         public string Value { get; }
 
         internal ClassifiedAdText(string text) => Value = text;

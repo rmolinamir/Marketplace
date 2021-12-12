@@ -1,10 +1,21 @@
 ﻿using Marketplace.Framework;
 using System.Text.RegularExpressions;
 
-namespace Marketplace.Domain
+namespace Marketplace.Domain.ClassifiedAd
 {
     public class ClassifiedAdTitle : Value<ClassifiedAdTitle>
     {
+        //
+        // Properties to handle the persistence
+        //
+
+        // Satisfy the serialization requirements 
+        protected ClassifiedAdTitle() { }
+
+        //
+        // Domain state properties
+        //
+
         private readonly string _value;
 
         public ClassifiedAdTitle(string value)

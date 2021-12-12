@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marketplace.Tests", "..\Mar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Marketplace.Framework", "..\Marketplace.Framework\Marketplace.Framework.csproj", "{30CFD6CA-F102-45B7-A547-ACBC55DAF6BE}"
 EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{4650A767-747D-430F-AB75-42FA73E66B4B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{30CFD6CA-F102-45B7-A547-ACBC55DAF6BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30CFD6CA-F102-45B7-A547-ACBC55DAF6BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30CFD6CA-F102-45B7-A547-ACBC55DAF6BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4650A767-747D-430F-AB75-42FA73E66B4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4650A767-747D-430F-AB75-42FA73E66B4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4650A767-747D-430F-AB75-42FA73E66B4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4650A767-747D-430F-AB75-42FA73E66B4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
