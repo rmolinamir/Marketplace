@@ -1,54 +1,65 @@
-using Microsoft.OpenApi.Models;
+using System;
+using EventStore.ClientAPI;
 using Marketplace.ClassifiedAd;
-using Marketplace.Domain.ClassifiedAd;
-using Marketplace.Domain.Shared;
-using Marketplace.Domain.UserProfile;
 using Marketplace.Framework;
 using Marketplace.Infrastructure;
+using Marketplace.Projections;
 using Marketplace.UserProfile;
+using Microsoft.OpenApi.Models;
 using Raven.Client.Documents;
+using Raven.Client.Documents.Session;
+using Raven.Client.ServerWide;
+using Raven.Client.ServerWide.Operations;
+using Swashbuckle.AspNetCore.Swagger;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
+
 // ReSharper disable UnusedMember.Global
 
 namespace Marketplace
 {
     public class Startup
     {
-        public Startup(IWebHostEnvironment environment, IConfiguration configuration)
+        public Startup(IHostingEnvironment environment, IConfiguration configuration)
         {
             Environment = environment;
             Configuration = configuration;
         }
 
         private IConfiguration Configuration { get; }
-        private IWebHostEnvironment Environment { get; }
+        private IHostingEnvironment Environment { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
-
-            var store = new DocumentStore
-            {
-                Urls = new[] { "http://localhost:8080" },
-                Database = "Marketplace_Chapter9",
-                Conventions =
-                  {
-                      FindIdentityProperty = x => x.Name == "DbId"
-                  }
-            };
-            store.Initialize();
-
+            var esConnection = EventStoreConnection.Create(
+                Configuration["eventStore:connectionString"],
+                ConnectionSettings.Create().KeepReconnecting(),
+                Environment.ApplicationName);
+            var store = new EsAggregateStore(esConnection);
             var purgomalumClient = new PurgomalumClient();
+            var documentStore = ConfigureRavenDb(Configuration.GetSection("ravenDb"));
 
-            services.AddSingleton<ICurrencyLookup, FixedCurrencyLookup>();
-            services.AddScoped(c => store.OpenAsyncSession());
-            services.AddScoped<IUnitOfWork, RavenDbUnitOfWork>();
-            services.AddScoped<IClassifiedAdRepository, ClassifiedAdRepository>();
-            services.AddScoped<IUserProfileRepository, UserProfileRepository>();
-            services.AddScoped<ClassifiedAdsApplicationService>();
-            services.AddScoped(c =>
-                new UserProfileApplicationService(
-                    c.GetService<IUserProfileRepository>(),
-                    c.GetService<IUnitOfWork>(),
-                    text => purgomalumClient.CheckForProfanity(text).GetAwaiter().GetResult()));
+            Func<IAsyncDocumentSession> getSession = () => documentStore.OpenAsyncSession();
+
+            services.AddTransient(c => getSession());
+
+            services.AddSingleton(esConnection);
+            services.AddSingleton<IAggregateStore>(store);
+
+            services.AddSingleton(new ClassifiedAdsApplicationService(
+                store, new FixedCurrencyLookup()));
+            services.AddSingleton(new UserProfileApplicationService(
+                store, t => purgomalumClient.CheckForProfanity(t).GetAwaiter().GetResult()));
+
+            var projectionManager = new ProjectionManager(esConnection,
+                new RavenDbCheckpointStore(getSession, "readmodels"),
+                new ClassifiedAdDetailsProjection(getSession,
+                    async userId => (await getSession.GetUserDetails(userId))?.DisplayName),
+                new ClassifiedAdUpcasters(esConnection,
+                    async userId => (await getSession.GetUserDetails(userId))?.PhotoUrl),
+                new UserDetailsProjection(getSession));
+
+            services.AddSingleton<IHostedService>(
+                new EventStoreService(esConnection, projectionManager));
 
             services.AddMvc(options => options.EnableEndpointRouting = false);
             services.AddSwaggerGen(c =>
@@ -62,7 +73,7 @@ namespace Marketplace
             });
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -73,6 +84,25 @@ namespace Marketplace
             app.UseSwagger();
             app.UseSwaggerUI(c =>
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "ClassifiedAds v1"));
+        }
+
+        private static IDocumentStore ConfigureRavenDb(IConfiguration configuration)
+        {
+            var store = new DocumentStore
+            {
+                Urls = new[] { configuration["server"] },
+                Database = configuration["database"]
+            };
+            store.Initialize();
+            var record = store.Maintenance.Server.Send(
+                new GetDatabaseRecordOperation(store.Database));
+            if (record == null)
+            {
+                store.Maintenance.Server.Send(
+                    new CreateDatabaseOperation(new DatabaseRecord(store.Database)));
+            }
+
+            return store;
         }
     }
 }

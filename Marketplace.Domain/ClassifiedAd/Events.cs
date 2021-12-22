@@ -1,7 +1,4 @@
-﻿using System;
-using Marketplace.Domain.Shared;
-
-namespace Marketplace.Domain.ClassifiedAd
+﻿namespace Marketplace.Domain.ClassifiedAd
 {
     public static class Events
     {
@@ -38,6 +35,7 @@ namespace Marketplace.Domain.ClassifiedAd
         public class ClassifiedAdPublished
         {
             public Guid Id { get; set; }
+            public Guid OwnerId { get; set; }
             public Guid ApprovedBy { get; set; }
         }
 

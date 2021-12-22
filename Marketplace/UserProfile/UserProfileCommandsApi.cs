@@ -10,7 +10,8 @@ namespace Marketplace.UserProfile
         private readonly UserProfileApplicationService _applicationService;
         private static readonly ILogger Log = Serilog.Log.ForContext<UserProfileCommandsApi>();
 
-        public UserProfileCommandsApi(UserProfileApplicationService applicationService) => _applicationService = applicationService;
+        public UserProfileCommandsApi(UserProfileApplicationService applicationService)
+            => _applicationService = applicationService;
 
         [HttpPost]
         public Task<IActionResult> Post(Contracts.V1.RegisterUser request)

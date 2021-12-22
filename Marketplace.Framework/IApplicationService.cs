@@ -1,9 +1,7 @@
-﻿using System.Threading.Tasks;
-
-namespace Marketplace.Framework
+﻿namespace Marketplace.Framework
 {
-    public interface IUnitOfWork
+    public interface IApplicationService
     {
-        Task Commit();
+        Task Handle(object command);
     }
 }
